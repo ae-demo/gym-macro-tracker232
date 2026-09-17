@@ -1,0 +1,4 @@
+apiVersion = "agentic-engineer/v1"
+name = "gym-macro-tracker232"
+createdAt = "2026-09-17T12:20:15Z"
+idea = "Build a gym macro tracker. Trainees sign in with their own account (platform identity provider / Thunder SSO), set their own daily calorie and macro (protein, carbs, fat) targets, and log meals and workouts in one place. Nutrition is manually entered — no external food database, no barcode scanning. A workout is exercises with sets/reps/weight or a cardio duration. Trainees see a daily macro summary against targets and a weekly history. A Trainee can invite a Coach who gets read access to that Trainee's logs and progress and can leave feedback; the Trainee can revoke access. Coaches never set targets or edit logs. Include a React web app and an API service that persists data in a database. Protect both the web app and the API with the platform identity provider. No social feeds, payments, or body-metric tracking."
