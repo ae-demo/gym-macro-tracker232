@@ -1,0 +1,800 @@
+openapi: 3.0.3
+info:
+  title: Gym Macro Tracker API
+  version: 0.1.0
+servers:
+  - url: /
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth2/authorize
+          tokenUrl: /oauth2/token
+          scopes:
+            targets:read: The caller's own targets
+            targets:set: Create or update the caller's own targets
+            targets:review: A linked client's targets
+            logs:read: The caller's own logs and summaries
+            logs:log: Create a meal or workout log entry
+            logs:edit: Update or delete the caller's own log entry
+            logs:review: A linked client's logs and summaries
+            coach-links:invite: Invite a coach
+            coach-links:list: View the caller's own invites/links
+            coach-links:accept: Accept a pending invite
+            coach-links:revoke: Revoke a coach link
+            feedback:create: Leave feedback for a linked client
+            feedback:read: The caller's own received feedback
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer, description: HTTP or application error code }
+        message: { type: string, description: short human-readable label }
+        description: { type: string, description: detailed explanation }
+        moreInfo: { type: string, description: URI to documentation }
+    Target:
+      type: object
+      required: [id, caloriesKcal, proteinG, carbsG, fatG, effectiveFrom]
+      properties:
+        id: { type: string }
+        caloriesKcal: { type: integer }
+        proteinG: { type: integer }
+        carbsG: { type: integer }
+        fatG: { type: integer }
+        effectiveFrom: { type: string, format: date }
+    MealLog:
+      type: object
+      required: [id, loggedDate, name, caloriesKcal, proteinG, carbsG, fatG]
+      properties:
+        id: { type: string }
+        loggedDate: { type: string, format: date }
+        name: { type: string }
+        caloriesKcal: { type: integer }
+        proteinG: { type: integer }
+        carbsG: { type: integer }
+        fatG: { type: integer }
+    MealLogInput:
+      type: object
+      required: [loggedDate, name, caloriesKcal, proteinG, carbsG, fatG]
+      properties:
+        loggedDate: { type: string, format: date }
+        name: { type: string }
+        caloriesKcal: { type: integer }
+        proteinG: { type: integer }
+        carbsG: { type: integer }
+        fatG: { type: integer }
+    ExerciseEntry:
+      type: object
+      required: [exerciseName, sets, reps, weightKg]
+      properties:
+        exerciseName: { type: string }
+        sets: { type: integer }
+        reps: { type: integer }
+        weightKg: { type: number }
+    WorkoutLog:
+      type: object
+      required: [id, loggedDate, type]
+      properties:
+        id: { type: string }
+        loggedDate: { type: string, format: date }
+        type: { type: string, enum: [strength, cardio] }
+        cardioDurationMin: { type: integer, nullable: true }
+        exercises:
+          type: array
+          items: { $ref: '#/components/schemas/ExerciseEntry' }
+    WorkoutLogInput:
+      type: object
+      required: [loggedDate, type]
+      properties:
+        loggedDate: { type: string, format: date }
+        type: { type: string, enum: [strength, cardio] }
+        cardioDurationMin: { type: integer, nullable: true }
+        exercises:
+          type: array
+          items: { $ref: '#/components/schemas/ExerciseEntry' }
+    DailySummary:
+      type: object
+      required: [date, target, totals]
+      properties:
+        date: { type: string, format: date }
+        target: { $ref: '#/components/schemas/Target' }
+        totals:
+          type: object
+          properties:
+            caloriesKcal: { type: integer }
+            proteinG: { type: integer }
+            carbsG: { type: integer }
+            fatG: { type: integer }
+    WeeklyHistory:
+      type: object
+      required: [days]
+      properties:
+        days:
+          type: array
+          items: { $ref: '#/components/schemas/DailySummary' }
+    CoachLink:
+      type: object
+      required: [id, status, invitedAt]
+      properties:
+        id: { type: string }
+        traineeId: { type: string }
+        traineeDisplayName: { type: string }
+        coachEmailOrUsername: { type: string }
+        status: { type: string, enum: [pending, accepted, revoked] }
+        invitedAt: { type: string, format: date-time }
+        respondedAt: { type: string, format: date-time, nullable: true }
+    CoachLinkInput:
+      type: object
+      required: [coachEmailOrUsername]
+      properties:
+        coachEmailOrUsername: { type: string }
+    Feedback:
+      type: object
+      required: [id, forDate, message, createdAt]
+      properties:
+        id: { type: string }
+        coachLinkId: { type: string }
+        forDate: { type: string, format: date }
+        message: { type: string }
+        createdAt: { type: string, format: date-time }
+    FeedbackInput:
+      type: object
+      required: [forDate, message]
+      properties:
+        forDate: { type: string, format: date }
+        message: { type: string }
+security:
+  - oauth2: []
+paths:
+  /me/targets:
+    get:
+      operationId: getMyTargets
+      summary: The caller's current targets
+      security:
+        - oauth2: [targets:read]
+      responses:
+        '200':
+          description: Current targets
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Target' }
+        '404':
+          description: No targets set yet
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    put:
+      operationId: setMyTargets
+      summary: Create or update the caller's targets
+      security:
+        - oauth2: [targets:set]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caloriesKcal, proteinG, carbsG, fatG]
+              properties:
+                caloriesKcal: { type: integer }
+                proteinG: { type: integer }
+                carbsG: { type: integer }
+                fatG: { type: integer }
+      responses:
+        '200':
+          description: Targets saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Target' }
+        '400':
+          description: Invalid target values
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/meals:
+    get:
+      operationId: listMyMeals
+      summary: The caller's own meal logs
+      security:
+        - oauth2: [logs:read]
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Matching meal logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/MealLog' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      operationId: logMyMeal
+      summary: Create a meal log entry
+      security:
+        - oauth2: [logs:log]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MealLogInput' }
+      responses:
+        '201':
+          description: Meal logged
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MealLog' }
+        '400':
+          description: Invalid meal data
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/meals/{mealId}:
+    put:
+      operationId: editMyMeal
+      summary: Update the caller's own meal log entry
+      security:
+        - oauth2: [logs:edit]
+      parameters:
+        - name: mealId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MealLogInput' }
+      responses:
+        '200':
+          description: Meal updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MealLog' }
+        '404':
+          description: No such meal log
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      operationId: deleteMyMeal
+      summary: Delete the caller's own meal log entry
+      security:
+        - oauth2: [logs:edit]
+      parameters:
+        - name: mealId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Meal deleted
+        '404':
+          description: No such meal log
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/workouts:
+    get:
+      operationId: listMyWorkouts
+      summary: The caller's own workout logs
+      security:
+        - oauth2: [logs:read]
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Matching workout logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WorkoutLog' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      operationId: logMyWorkout
+      summary: Create a workout log entry
+      security:
+        - oauth2: [logs:log]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkoutLogInput' }
+      responses:
+        '201':
+          description: Workout logged
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkoutLog' }
+        '400':
+          description: Invalid workout data
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/workouts/{workoutId}:
+    put:
+      operationId: editMyWorkout
+      summary: Update the caller's own workout log entry
+      security:
+        - oauth2: [logs:edit]
+      parameters:
+        - name: workoutId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkoutLogInput' }
+      responses:
+        '200':
+          description: Workout updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkoutLog' }
+        '404':
+          description: No such workout log
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      operationId: deleteMyWorkout
+      summary: Delete the caller's own workout log entry
+      security:
+        - oauth2: [logs:edit]
+      parameters:
+        - name: workoutId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Workout deleted
+        '404':
+          description: No such workout log
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/summary:
+    get:
+      operationId: getMyDailySummary
+      summary: The caller's daily macro summary against targets
+      security:
+        - oauth2: [logs:read]
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Daily totals and target
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DailySummary' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/history:
+    get:
+      operationId: getMyWeeklyHistory
+      summary: The caller's trailing 7-day history
+      security:
+        - oauth2: [logs:read]
+      responses:
+        '200':
+          description: Trailing 7-day summaries
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WeeklyHistory' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/coach-links:
+    get:
+      operationId: listMyCoachLinks
+      summary: The caller's own coach invites/links, sent or received
+      security:
+        - oauth2: [coach-links:list]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, accepted, revoked] }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Matching coach links
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CoachLink' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      operationId: inviteCoach
+      summary: Invite a coach by email or username
+      security:
+        - oauth2: [coach-links:invite]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CoachLinkInput' }
+      responses:
+        '201':
+          description: Invite created, pending acceptance
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CoachLink' }
+        '400':
+          description: No such platform account, or a link already active
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/coach-links/{linkId}/accept:
+    post:
+      operationId: acceptCoachLink
+      summary: Accept a pending invite addressed to the caller
+      security:
+        - oauth2: [coach-links:accept]
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Link accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CoachLink' }
+        '404':
+          description: No such pending invite
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/coach-links/{linkId}/revoke:
+    post:
+      operationId: revokeCoachLink
+      summary: Revoke a coach link owned by the caller as trainee
+      security:
+        - oauth2: [coach-links:revoke]
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Link revoked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CoachLink' }
+        '404':
+          description: No such link
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/feedback:
+    get:
+      operationId: listMyFeedback
+      summary: The caller's own received feedback
+      security:
+        - oauth2: [feedback:read]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Matching feedback
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Feedback' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/clients:
+    get:
+      operationId: listMyClients
+      summary: The coach's accepted trainee links
+      security:
+        - oauth2: [coach-links:list]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Accepted client links
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CoachLink' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/clients/{traineeId}/targets:
+    get:
+      operationId: getClientTargets
+      summary: A linked client's targets
+      security:
+        - oauth2: [targets:review]
+      parameters:
+        - name: traineeId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Client's current targets
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Target' }
+        '404':
+          description: No accepted link with this trainee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/clients/{traineeId}/summary:
+    get:
+      operationId: getClientDailySummary
+      summary: A linked client's daily macro summary against targets
+      security:
+        - oauth2: [logs:review]
+      parameters:
+        - name: traineeId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Client's daily totals and target
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DailySummary' }
+        '404':
+          description: No accepted link with this trainee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/clients/{traineeId}/history:
+    get:
+      operationId: getClientWeeklyHistory
+      summary: A linked client's trailing 7-day history
+      security:
+        - oauth2: [logs:review]
+      parameters:
+        - name: traineeId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Client's trailing 7-day summaries
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WeeklyHistory' }
+        '404':
+          description: No accepted link with this trainee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/clients/{traineeId}/feedback:
+    post:
+      operationId: leaveClientFeedback
+      summary: Leave feedback for a linked client
+      security:
+        - oauth2: [feedback:create]
+      parameters:
+        - name: traineeId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FeedbackInput' }
+      responses:
+        '201':
+          description: Feedback saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Feedback' }
+        '404':
+          description: No accepted link with this trainee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Not signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy

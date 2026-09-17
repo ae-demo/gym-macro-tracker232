@@ -1,0 +1,64 @@
+{
+  "version": 3,
+  "permissions": [
+    {
+      "resource": "targets",
+      "component": "gym-api",
+      "description": "A Trainee's daily calorie and macro targets",
+      "actions": [
+        { "handle": "read", "description": "The caller's own targets" },
+        { "handle": "set", "description": "Create or update the caller's own targets" },
+        { "handle": "review", "description": "A linked client's targets" }
+      ]
+    },
+    {
+      "resource": "logs",
+      "component": "gym-api",
+      "description": "A Trainee's meal and workout log entries and derived summaries",
+      "actions": [
+        { "handle": "read", "description": "The caller's own logs, daily summary and weekly history" },
+        { "handle": "log", "description": "Create a meal or workout log entry" },
+        { "handle": "edit", "description": "Update or delete the caller's own log entry" },
+        { "handle": "review", "description": "A linked client's logs, daily summary and weekly history" }
+      ]
+    },
+    {
+      "resource": "coach-links",
+      "component": "gym-api",
+      "description": "The invite relationship between a Trainee and a Coach",
+      "actions": [
+        { "handle": "invite", "description": "Invite a coach by email or username" },
+        { "handle": "list", "description": "View the caller's own sent or received invites/links" },
+        { "handle": "accept", "description": "Accept a pending invite addressed to the caller" },
+        { "handle": "revoke", "description": "Revoke a coach link the caller owns as the trainee" }
+      ]
+    },
+    {
+      "resource": "feedback",
+      "component": "gym-api",
+      "description": "Coach feedback left against a Trainee's progress",
+      "actions": [
+        { "handle": "create", "description": "Leave feedback for a linked client" },
+        { "handle": "read", "description": "The caller's own received feedback" }
+      ]
+    }
+  ],
+  "groups": [],
+  "roles": [
+    {
+      "name": "Trainee",
+      "description": "Sets their own targets, logs meals and workouts, reviews their own progress, invites and revokes a coach.",
+      "stories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14],
+      "grants": ["targets:read", "targets:set", "logs:read", "logs:log", "logs:edit", "coach-links:invite", "coach-links:list", "coach-links:revoke", "feedback:read"],
+      "enrolment": "self-service"
+    },
+    {
+      "name": "Coach",
+      "description": "Accepts trainee invites, reviews a linked trainee's progress read-only, and leaves feedback.",
+      "stories": [1, 10, 12, 13],
+      "grants": ["coach-links:list", "coach-links:accept", "targets:review", "logs:review", "feedback:create"],
+      "enrolment": "self-service"
+    }
+  ],
+  "testUsers": []
+}

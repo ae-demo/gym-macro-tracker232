@@ -1,0 +1,15 @@
+title Gym Macro Tracker
+
+component gym-webapp as "Gym Macro Tracker Web App" web-application
+component gym-api as "Gym Macro Tracker API" service
+component gym-db as "Gym Data" database
+
+east user-auth as "Thunder Auth" identity-server
+
+north -> gym-webapp
+north -> gym-api
+
+gym-webapp -> gym-api
+gym-webapp -> user-auth
+gym-api -> user-auth
+gym-api -> gym-db
