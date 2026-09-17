@@ -7,11 +7,58 @@
   "appPath": "gym-webapp",
   "entrypoint": "deployment/web-application",
   "exposure": "internet",
-  "dependencies": [
-    { "kind": "component", "name": "gym-api", "description": "Calls the API to manage targets, logs, coach links and feedback." },
-    { "kind": "platform-resource", "name": "user-auth", "resourceType": "thunder-app", "parameters": {} }
+  "stories": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
   ],
   "description": "React single-page app where a Trainee signs in, sets targets, logs meals and workouts, reviews daily/weekly progress, and manages a Coach invite; a Coach signs in to accept invites, review a linked Trainee's progress read-only, and leave feedback. Holds no persistent data itself — all state lives behind gym-api.",
-  "stories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-  "skillsPinned": ["wireframes", "react-webapp", "oxygen-ui-design-system", "thunder-authentication"]
+  "dependencies": [
+    {
+      "kind": "component",
+      "name": "gym-api",
+      "description": "Calls the API to manage targets, logs, coach links and feedback.",
+      "wiring": {
+        "endpoint": {
+          "component": "gym-macro-tracker232-gym-api",
+          "name": "http",
+          "visibility": "project",
+          "envBindings": {
+            "address": "GYM_API_URL"
+          }
+        }
+      }
+    },
+    {
+      "kind": "platform-resource",
+      "name": "user-auth",
+      "resourceType": "thunder-app",
+      "wiring": {
+        "ref": "gym-macro-tracker-8b26af6e",
+        "envBindings": {
+          "client_id": "USER_AUTH_CLIENT_ID",
+          "issuer": "USER_AUTH_ISSUER",
+          "jwks_url": "USER_AUTH_JWKS_URL",
+          "scopes": "USER_AUTH_SCOPES"
+        }
+      }
+    }
+  ],
+  "skillsPinned": [
+    "wireframes",
+    "react-webapp",
+    "oxygen-ui-design-system",
+    "thunder-authentication"
+  ]
 }
