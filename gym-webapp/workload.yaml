@@ -1,0 +1,28 @@
+apiVersion: openchoreo.dev/v1alpha1
+metadata:
+  name: gym-webapp
+
+endpoints:
+  - name: http
+    type: HTTP
+    port: 9090
+    basePath: /
+    visibility:
+      - project
+      - external
+
+dependencies:
+  endpoints:
+    - component: gym-macro-tracker232-gym-api
+      name: http
+      visibility: project
+      envBindings:
+        address: GYM_API_URL
+  resources:
+    - ref: gym-macro-tracker-8b26af6e
+      envBindings:
+        client_id: USER_AUTH_CLIENT_ID
+        issuer: USER_AUTH_ISSUER
+        jwks_url: USER_AUTH_JWKS_URL
+        scopes: USER_AUTH_SCOPES
+        resource: USER_AUTH_RESOURCE
