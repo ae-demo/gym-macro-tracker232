@@ -29,33 +29,33 @@ progress. Never sets targets or edits a Trainee's logs.
 ## User Stories
 
 1. As a Trainee, I want to sign in with my own platform account, so that my
- nutrition and workout data is private to me.
+nutrition and workout data is private to me.
 2. As a Trainee, I want to set my daily calorie and macro (protein, carbs, fat)
- targets, so that I have a baseline to track against.
+targets, so that I have a baseline to track against.
 3. As a Trainee, I want to update my targets whenever my goals change, so that my
- tracking stays accurate.
+tracking stays accurate.
 4. As a Trainee, I want to manually log a meal with its calories and macros, so
- that I can record what I ate without relying on a food database.
+that I can record what I ate without relying on a food database.
 5. As a Trainee, I want to manually log a workout — either strength exercises with
- sets/reps/weight or a cardio duration — so that I can record my training.
+sets/reps/weight or a cardio duration — so that I can record my training.
 6. As a Trainee, I want to edit or delete a meal or workout log entry, so that I
- can correct mistakes.
+can correct mistakes.
 7. As a Trainee, I want to see a daily summary of my logged calories and macros
- against my targets, so that I know how today is going.
+against my targets, so that I know how today is going.
 8. As a Trainee, I want to see a weekly history of my nutrition and workout logs,
- so that I can review my progress over time.
+so that I can review my progress over time.
 9. As a Trainee, I want to invite a Coach by their platform email or username, so
- that they can review my progress.
+that they can review my progress.
 10. As a Coach, I want to see invites sent to me and accept the ones I want, so
- that I control which Trainees I take on.
+that I control which Trainees I take on.
 11. As a Trainee, I want to revoke a Coach's access at any time, so that I stay in
- control of who can see my data.
+control of who can see my data.
 12. As a Coach, I want to view an accepting Trainee's targets, logs, daily summary,
- and weekly history (read-only), so that I can assess their progress.
+and weekly history (read-only), so that I can assess their progress.
 13. As a Coach, I want to leave feedback for a Trainee, so that I can guide their
- nutrition and training.
+nutrition and training.
 14. As a Trainee, I want to view feedback my Coach has left, so that I can act on
- their guidance.
+their guidance.
 
 ## Product Decisions
 
