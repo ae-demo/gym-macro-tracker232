@@ -1,4 +1,5 @@
 title Gym Macro Tracker
+# Reviewed against current PRD
 
 component gym-webapp as "Gym Macro Tracker Web App" web-application
 component gym-api as "Gym Macro Tracker API" service
